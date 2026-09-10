@@ -1,151 +1,166 @@
 <div align="center">
-  <!-- <img src="frontend/public/vite.svg" alt="RAHI Logo" width="150" /> -->
-  <h1>RAHI - EV Fleet Routing & Dispatch Engine</h1>
-  <p>
-    <strong>Physics-Based Multi-Stop EV Charging Optimization for India</strong>
-  </p>
-  <p>
-    <a href="#key-features">Features</a>
-    &nbsp;&middot;&nbsp;
-    <a href="#architecture">Architecture</a>
-    &nbsp;&middot;&nbsp;
-    <a href="#tech-stack">Tech Stack</a>
-  </p>
+  <img src="assets/logo.png" alt="RAHI Logo" width="200" />
+  <h1>RAHI - Route Analysis and Haulage Intelligence</h1>
+  <p><strong>Physics-Informed Multi-Objective EV Fleet Routing & Dispatch Engine</strong></p>
 </div>
 
----
+## 1. Project Information
 
-## Table of Contents
+- **Project Title:** RAHI – Dynamic EV Fleet Routing & Dispatch Engine
+- **PS ID:** SIH26205
+- **PS Title:** Student Innovation (Transportation & Logistics)
+- **Category:** Software
+- **Theme:** Transportation & Logistics
 
-- [About the Project](#about-the-project)
-- [Key Features](#key-features)
-- [Tech Stack](#tech-stack)
-- [Architecture & Physics Engine](#architecture--physics-engine)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
+## 2. Problem Statement
 
----
+Commercial Electric Vehicle (EV) fleet dispatchers operate under severe real-world uncertainty. Standard shortest-path algorithms rely on static road networks and linear battery discharge assumptions, completely ignoring:
+1. **Dynamic Road Topography & Inertial Forces:** Elevation gradients ($\theta$), rolling friction, and aerodynamic drag drastically accelerate battery depletion under commercial cargo payloads.
+2. **Charging Station Congestion:** Severe queueing delays and fluctuating charger availability at public charging hubs cause missed delivery windows and expensive driver overtime penalties.
+3. **Electrochemical Realities:** Forcing ultra-fast DC charging on high-temperature packs or charging beyond 80% SoC causes severe non-linear cell throttling (CC-CV phase) and rapid capacity fade.
 
-## About the Project
+## 3. Proposed Solution
 
-**RAHI** (Route Analysis and Haulage Intelligence) is an advanced routing and dispatch platform tailored for commercial Electric Vehicle (EV) fleets in India. Unlike standard routing apps, RAHI uses a deterministic **Physics Engine** to calculate energy consumption (kWh) based on vehicle mass, payload, road grade, and speed. 
+RAHI solves the EV Vehicle Routing Problem with Pickup and Delivery (VRP-PD) by coupling first-principles electrical engineering physics with a data-driven Machine Learning pipeline.
 
-It generates multi-stop charging plans across an all-India database of charging hubs, ensuring vehicles reach their destinations without depleting their batteries. The engine dynamically adjusts routes based on fleet goals—whether prioritizing speed, minimizing charging costs, reducing battery degradation, or optimizing for the lowest environmental impact.
+### Architectural Strategy: Physics Baseline + Machine Learning Optimization
+* **The Deterministic Physics Engine (Implemented in Prototype):** Computes exact baseline traction energy ($F_{\text{traction}}$), non-linear battery CC-CV charge curves, and stochastic $M/M/\mathcal{N}_c/K_c$ queue wait times. This guarantees that foundational route evaluations obey energy conservation laws.
+* **The Active Machine Learning Pipeline (In Active Training & Pipeline Integration):**
+  * **Physics-Guided XGBoost (Energy Prediction):** Predicts the non-deterministic energy *residuals* caused by live traffic stop-and-go patterns on top of the physical baseline.
+  * **Time-Series LSTM (Queue Forecasting):** Learns non-stationary customer arrival rates $\Lambda_c(t)$ from temporal traffic patterns to drive the queueing model.
+  * **Constrained Deep Q-Network / RL Agent (Route Dispatch):** Evaluates the 4-parameter cost vector ($\mathbf{J} = [J_{\text{time}}, J_{\text{cost}}, J_{\text{health}}, J_{\text{env}}]^T$) with $\epsilon$-constrained boundaries to select optimal charging detours.
 
----
+## 4. Key Features
 
-## Key Features
+- **Physics-Informed Telemetry:** Computes continuous energy consumption ($e_{i,j}$) taking into account vehicle curb weight, live cargo payload, road grade ($\theta$), and motor efficiency mappings.
+- **Dynamic Queue-Aware Charging Stops:** Intercepts routes before SoC hits critical reserve limits ($12\%$) and routes trucks to chargers optimized for low wait times and off-peak Time-of-Use (ToU) tariffs.
+- **Multi-Objective Bounded Trade-Offs:** Fleet managers choose a primary target (**Fastest Transit**, **Lowest Cost**, **Battery Health**, or **Lowest Emissions**) while the engine applies hard $\epsilon$-constraints to prevent excessive secondary degradation.
+- **Highway & Urban Corridor Database:** Curated database of charging hubs mapped across key Indian freight corridors.
+- **Interactive Enterprise Visualizer:** Real-time dashboard with dynamic SoC trajectory graphs, detour polylines, and multi-variable KPI breakdowns.
 
-| Feature | Description |
-|---|---|
-| **Physics-Based Telemetry** | Calculates exact energy drain (kWh) considering payload limits, grade resistance, and rolling resistance over long-haul routes. |
-| **Multi-Stop Charge Planning** | Automatically detects when the State of Charge (SoC) drops below a critical threshold (12%) and routes the vehicle to the nearest optimized charging hub. |
-| **Dynamic Goal Optimization** | Adjusts routing and charging station selection based on fleet priorities: **Fastest Transit**, **Lowest Cost**, **Battery Health** (favoring 50kW chargers), or **Lowest Emissions**. |
-| **All-India Station Database** | Includes a robust, synthetic database of ~70 charging hubs heavily concentrated in Tier-1 cities and major Indian highway corridors. |
-| **Live Route Visualizer** | A premium React/Leaflet dashboard featuring sleek glassmorphism components, dark/light modes, and interactive route mapping. |
+## 5. Technology Stack
 
----
+- **Frontend Dashboard:** React 18, TypeScript, Vite, Tailwind CSS, Leaflet / React-Leaflet, Lucide Icons, Recharts
+- **Backend Core & Routing:** Python 3.11+, FastAPI, Uvicorn, OSRM Engine, NetworkX
+- **Machine Learning Pipeline (Active Integration):** PyTorch (DQN / RL Agent), XGBoost / LightGBM, TensorFlow/Keras (LSTM Arrival Predictor)
+- **Data Protocols & APIs:** OpenStreetMap (OSMnx), Open-Elevation API, Open Charge Map
 
-## Tech Stack
+## 6. Architecture
 
-### Backend & Core Logic
-| Technology | Purpose |
-|---|---|
-| **Python (v3.11+)** | Core physics engine and telemetry calculations |
-| **FastAPI** | High-performance asynchronous REST API |
-| **Uvicorn** | Lightning-fast ASGI web server |
-| **OSRM Public API** | Real-world road-following routes and polyline geometries |
-
-### Frontend UI & Dashboard
-| Technology | Purpose |
-|---|---|
-| **React & TypeScript** | Component-based UI and strict type safety |
-| **Vite** | Blazing fast frontend build tool |
-| **Leaflet & React-Leaflet** | Interactive maps and custom sleek vector markers |
-| **CSS3 & Glassmorphism** | Modern, premium aesthetic with smooth micro-animations |
-
----
-
-## Architecture & Physics Engine
-
-RAHI operates on a strict multi-phase execution model to guarantee that the vehicle completes its journey safely and efficiently.
-
-```mermaid
-%%{init: {"flowchart": {"curve": "stepAfter"}}}%%
-flowchart TD
-    A(["Fleet Dispatch Request (Start, End, Payload, SoC)"]) --> B["Phase 1: Direct Route Polling (OSRM)"]
-    
-    B --> C["Phase 2: Physics Telemetry Walk"]
-    C --> D{"Calculate Segment Energy"}
-    D -- "Mass, Speed, Grade" --> E{"Check Battery SoC"}
-    
-    E -- "SoC > 12%" --> C
-    E -- "SoC <= 12%" --> F["Find Optimal Charging Station"]
-    
-    F --> G{"Evaluate Priority (Cost, Time, Health)"}
-    G -- "Detour / Slower Charger" --> H["Update Battery to 80%"]
-    H --> C
-    
-    C -- "Destination Reached" --> I["Phase 3: Final Route Construction"]
-    I --> J["Phase 4: Final Telemetry Pass"]
-    
-    J --> K[("Dispatch Payload JSON & Map Visualizer")]
-```
-
----
-
-## Project Structure
+See [docs/architecture.md](docs/architecture.md) for full mathematical derivations and ML training loss formulations.
 
 ```text
-RAHI-SIH-26/
-|-- README.md                 # Project documentation
-|
-|-- backend/                  # FastAPI Server & Physics Engine
-|   |-- main.py               # API endpoints, OSRM routing, and multi-stop logic
-|   |-- physics_engine.py     # Kinematics, battery degradation, and queueing theory
-|   +-- requirements.txt      # Python dependencies
-|
-+-- frontend/                 # React UI Dashboard
-    |-- src/
-    |   |-- App.tsx           # Dashboard layout and state management
-    |   |-- index.css         # Glassmorphism design system and priority colors
-    |   +-- components/       # MapView, Sidebar, KPI Dashboard, Analytics
-    |-- package.json          # Node dependencies
-    +-- vite.config.ts        # Vite configuration
+               +---------------------------------------------+
+               |  Fleet Dispatch Input (Stops, Payload, SoC) |
+               +---------------------------------------------+
+                                      |
+                                      v
+               +---------------------------------------------+
+               |    Phase 1: OSRM Route Geometry Extraction  |
+               +---------------------------------------------+
+                                      |
+            +-------------------------+-------------------------+
+            |                                                   |
+            v                                                   v
++-------------------------------+               +-------------------------------+
+|  Physics Engine Baseline      |               |  Active ML Enhancement Layer  |
+|  - Longitudinal Forces        | <-----------> |  - XGBoost: Traffic Residuals |
+|  - CC-CV Charging Profile     |               |  - LSTM: Station Arrival Rates|
+|  - M/M/N/K Queue Equations    |               |  - Constrained DQN: Detours   |
++-------------------------------+               +-------------------------------+
+                                      |
+                                      v
+               +---------------------------------------------+
+               |   Phase 2: Multi-Objective Decision Engine  |
+               +---------------------------------------------+
+                                      |
+                                      v
+               +---------------------------------------------+
+               |   Phase 3: Telemetry Synthesis & Dashboard  |
+               +---------------------------------------------+
 ```
 
----
+## 7. Repository Structure
 
-## Getting Started
+```text
+prototype/
+├── assets/                   # Logos, screenshots, and visual assets
+├── backend/                  # FastAPI Server & Physics Engine
+│   ├── __pycache__/
+│   ├── download_graph.py
+│   ├── main.py
+│   ├── physics_engine.py
+│   └── requirements.txt
+├── docs/                     # Technical documentation
+│   └── architecture.md
+├── frontend/                 # React UI Dashboard (Vite, Leaflet, Tailwind)
+├── submission/               # Final SIH documents
+│   ├── DEMO.md
+│   └── PRESENTATION.md
+└── README.md
+```
 
-### Prerequisites
-- **Node.js** (v18 or higher)
-- **Python** (v3.10 or higher)
+## 8. Final Presentation
 
-### Installation & Run
+The presentation deck covers our mechanical traction modeling, queueing theory proofs, active ML pipeline integration, and live prototype benchmarking.
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/tarunsh07/RAHI-SIH-26.git
-   cd RAHI-SIH-26
-   ```
+See `submission/PRESENTATION.md` for the slide breakdown and accessible presentation link.
 
-2. **Start the Backend**
-   ```bash
-   cd backend
-   pip install -r requirements.txt
-   python -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload
-   ```
+## 9. Demo Video
 
-3. **Start the Frontend**
-   ```bash
-   # In a new terminal
-   cd frontend
-   npm install
-   npm run dev
-   ```
+See `submission/DEMO.md` for local execution instructions and the demo recording link.
 
-4. **Open the Dashboard**
-   - Open your browser and navigate to `http://localhost:5173/`
+## 10. Screenshots / Prototype Photos
 
----
+See the `assets/screenshot/` directory for high-resolution images of our live prototype.
+
+## 11. Installation
+
+### Clone Repository
+```bash
+git clone https://github.com/tarunsh07/RAHI-SIH-26.git
+cd RAHI-SIH-26
+```
+
+### Backend Setup
+```bash
+cd backend
+python -m venv venv
+# On Windows:
+venv\Scripts\activate
+# On Linux/macOS:
+source venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+### Frontend Setup
+```bash
+cd ../frontend
+npm install
+```
+
+## 12. Run
+
+### 1. Launch FastAPI Backend Server
+```bash
+cd backend
+python -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload
+```
+API Documentation and Swagger UI will be available at `http://127.0.0.1:8000/docs`.
+
+### 2. Launch React Frontend Interface
+```bash
+# In a separate terminal
+cd frontend
+npm run dev
+```
+Open `http://localhost:5173/` in any browser to interact with the dispatch dashboard.
+
+## 13. Future Scope
+
+While the core physics-informed dispatch engine and ML pipeline represent our production architecture, future platform expansion includes:
+
+- **Vehicle-to-Grid (V2G) Bi-Directional Integration:** Allowing commercial fleets to discharge power back into regional microgrids during peak tariff hours to generate auxiliary revenue.
+- **Cell Temperature & Battery Thermal Management:** Modeling dynamic HVAC cooling loads and ambient heat factors on Indian highways to actively predict thermal throttling during summer routes.
+- **Onboard Telematics (OBD-II / CAN Bus) Integration:** Connecting directly with commercial EV telematics for continuous, real-time SoC and tire-pressure calibration.
