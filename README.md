@@ -112,7 +112,9 @@ See `submission/DEMO.md` for local execution instructions and the demo recording
 
 ## 10. Screenshots / Prototype Photos
 
-See the `assets/screenshot/` directory for high-resolution images of our live prototype.
+<img width="1908" height="915" alt="1" src="https://github.com/user-attachments/assets/6420ff05-aac7-4877-8259-80056b537ebd" />
+<img width="1912" height="920" alt="2" src="https://github.com/user-attachments/assets/94ea272d-bc3a-4d6a-ac51-d42d742cbe21" />
+
 
 ## 11. Installation
 
