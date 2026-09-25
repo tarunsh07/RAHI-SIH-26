@@ -8,6 +8,7 @@ export interface RouteRequest {
   payload_kg: number;
   starting_soc: number;
   optimization_priority: "time" | "cost" | "health" | "env";
+  truck_model?: string;
 }
 
 export interface ChargingStop {

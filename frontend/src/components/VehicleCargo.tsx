@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Maximize2, X, Leaf } from "lucide-react";
-import type { RouteResponse } from "../types";
+import type { RouteResponse, RouteRequest } from "../types";
 
-export default function VehicleCargo({ payload_kg, routeData }: { payload_kg: number, routeData: RouteResponse | null }) {
+export default function VehicleCargo({ form, routeData }: { form: RouteRequest, routeData: RouteResponse | null }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const content = (
@@ -17,12 +17,19 @@ export default function VehicleCargo({ payload_kg, routeData }: { payload_kg: nu
       </div>
       
       <div style={{ display: "flex", flexDirection: isExpanded ? "column" : "row", alignItems: "center", gap: "12px", flex: 1 }}>
-        <img src="/truck.png" alt="EV Truck" className="vehicle-img" style={{ borderRadius: "8px", objectFit: "contain", height: isExpanded ? "200px" : "60px", width: isExpanded ? "100%" : "80px", marginBottom: isExpanded ? "12px" : "0", flexShrink: 0 }} />
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: isExpanded ? "100%" : "80px", flexShrink: 0 }}>
+          <img src="/truck.png" alt="EV Truck" className="vehicle-img" style={{ borderRadius: "8px", objectFit: "contain", height: isExpanded ? "180px" : "50px", width: "100%", marginBottom: isExpanded ? "8px" : "4px" }} />
+          <div style={{ fontSize: isExpanded ? "0.85rem" : "0.55rem", fontWeight: 700, color: "#0f172a", textAlign: "center", lineHeight: 1.1 }}>{form.truck_model || "Freightliner eCascadia"}</div>
+        </div>
         
         <div className="vehicle-specs" style={{ fontSize: isExpanded ? "1rem" : "0.65rem", gap: isExpanded ? "16px" : "4px", width: "100%" }}>
           <div className="spec-row">
-            <span className="spec-label">Battery Capacity</span>
-            <span className="spec-value">120 kWh</span>
+            <span className="spec-label">Battery</span>
+            <span className="spec-value">
+              {form.truck_model === "Volvo VNR Electric" ? "565 kWh" : 
+               form.truck_model === "Freightliner eCascadia" ? "438 kWh" : 
+               form.truck_model === "Nikola Tre BEV" ? "733 kWh" : "850 kWh"}
+            </span>
           </div>
           {isExpanded && (
             <div className="spec-row">
@@ -31,12 +38,14 @@ export default function VehicleCargo({ payload_kg, routeData }: { payload_kg: nu
             </div>
           )}
           <div className="spec-row">
-            <span className="spec-label">Vehicle Type</span>
-            <span className="spec-value">6-Wheeler (EV)</span>
+            <span className="spec-label">Type</span>
+            <span className="spec-value">
+              {form.truck_model === "Tesla Semi" ? "Class 8 Semi-Truck" : "Class 8 EV Truck"}
+            </span>
           </div>
           <div className="spec-row">
             <span className="spec-label">Payload Mass</span>
-            <span className="spec-value">{payload_kg} kg</span>
+            <span className="spec-value">{form.payload_kg} kg</span>
           </div>
         </div>
       </div>

@@ -97,8 +97,8 @@ export default function RouteItinerary({ routeData, startName, endName }: { rout
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
         <div className="section-title" style={{ marginBottom: 0 }}>Route Itinerary</div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <button onClick={handleExport} style={{ display: "flex", alignItems: "center", gap: 4, background: "transparent", border: "1px solid #e2e8f0", borderRadius: 4, padding: "2px 6px", fontSize: "0.6rem", color: "#475569", cursor: "pointer" }}>
-            <Download size={10} /> Export
+          <button onClick={handleExport} style={{ display: "flex", alignItems: "center", gap: 6, background: "white", border: "2px solid #cbd5e1", borderRadius: 4, padding: "4px 10px", fontSize: "0.75rem", color: "#475569", cursor: "pointer", fontWeight: 600, transition: "0.2s", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
+            <Download size={12} /> Export
           </button>
           {!isExpanded && (
             <button onClick={() => setIsExpanded(true)} style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", display: "flex", padding: 0 }}>

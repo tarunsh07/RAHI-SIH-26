@@ -54,12 +54,69 @@ export default function KPIDash({ routeData }: KPIDashProps) {
     );
   }
 
-  const { kpi_metrics: kpi, telemetry_data } = routeData;
+  const { kpi_metrics: kpi, telemetry_data, charging_stops } = routeData;
 
   const hrs = Math.floor(kpi.j_time_hrs);
   const mins = Math.round((kpi.j_time_hrs - hrs) * 60);
-  const timeStr = hrs > 0 ? `${hrs.toFixed(1)} hrs` : `${mins} min`;
-  const timeSub = hrs > 0 ? `${hrs}h ${mins}m driving + charging` : `${mins}m total`;
+
+  const MetricCard = ({ icon: Icon, iconBg, iconColor, value, unit, badge, label, isExpanded }: any) => (
+    <div style={{
+      boxSizing: "border-box",
+      background: "#ffffff",
+      border: "1px solid #e2e8f0",
+      borderRadius: "6px",
+      padding: "10px",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "space-between",
+      height: "100%",
+    }}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", height: isExpanded ? "48px" : "38px", marginBottom: "8px" }}>
+        <div style={{ width: 24, height: 24, borderRadius: "6px", background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <Icon size={12} color={iconColor} />
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.15 }}>
+          <span style={{ fontSize: isExpanded ? "1.2rem" : "0.9rem", fontWeight: 700, color: "#0f172a" }}>{value}</span>
+          <span style={{ fontSize: isExpanded ? "0.85rem" : "0.7rem", fontWeight: 600, color: "#0f172a", marginTop: "1px" }}>{unit || "\u00A0"}</span>
+        </div>
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ fontSize: isExpanded ? "0.9rem" : "0.65rem", fontWeight: 600, color: "#475569" }}>
+          {label}
+        </div>
+        <div style={{ fontSize: isExpanded ? "0.85rem" : "0.65rem", fontWeight: 700, color: badge ? "#16a34a" : "#94a3b8" }}>
+          {badge ? `↓ ${badge}` : "—"}
+        </div>
+      </div>
+    </div>
+  );
+
+  const kpiCards = [
+    {
+      icon: Clock, iconBg: "#eff6ff", iconColor: "#3b82f6",
+      value: hrs > 0 ? hrs.toFixed(1) : mins.toString(),
+      unit: hrs > 0 ? "hrs" : "min",
+      badge: "18%", label: "Total Time"
+    },
+    {
+      icon: Banknote, iconBg: "#dcfce7", iconColor: "#16a34a",
+      value: `₹${Math.round(kpi.j_cost_usd * 80).toLocaleString("en-IN")}`,
+      unit: "",
+      badge: "22%", label: "Total Cost"
+    },
+    {
+      icon: Battery, iconBg: kpi.battery_health === "Nominal" ? "#dcfce7" : "#fef3c7", iconColor: kpi.battery_health === "Nominal" ? "#16a34a" : "#d97706",
+      value: kpi.battery_health.includes("High") ? "High" : kpi.battery_health,
+      unit: kpi.battery_health.includes("High") ? "Degradation" : "",
+      badge: "", label: "Battery Health"
+    },
+    {
+      icon: Leaf, iconBg: "#dcfce7", iconColor: "#16a34a",
+      value: kpi.j_env_gco2 >= 1000 ? (kpi.j_env_gco2 / 1000).toFixed(1) : Math.round(kpi.j_env_gco2).toString(),
+      unit: kpi.j_env_gco2 >= 1000 ? "kg" : "g",
+      badge: "28%", label: "Grid CO₂"
+    }
+  ];
 
   const outcomesContent = (
     <>
@@ -83,70 +140,8 @@ export default function KPIDash({ routeData }: KPIDashProps) {
         <p style={{ fontSize: "0.7rem", color: "#64748b", marginBottom: 12, marginTop: -4 }}>Key performance indicators for the optimized route.</p>
       )}
 
-      <div className="kpi-white-grid" style={{ display: "grid", gridTemplateColumns: isOutcomesExpanded ? "repeat(4, minmax(0, 1fr))" : "repeat(2, minmax(0, 1fr))", gap: "8px" }}>
-        {/* Time */}
-        <div className="kpi-box">
-          <div className="kpi-box-top">
-            <div className="kpi-icon-wrapper">
-              <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Clock size={12} color="#3b82f6" />
-              </div>
-              <div className="kpi-box-value" style={isOutcomesExpanded ? { fontSize: "1.2rem" } : { fontSize: "0.85rem" }}>{timeStr}</div>
-            </div>
-            <div className="kpi-badge" style={{ color: "#16a34a", fontSize: "0.6rem", fontWeight: 700 }}>↓ 18%</div>
-          </div>
-          <div className="kpi-box-label" style={isOutcomesExpanded ? { fontSize: "0.9rem" } : { fontSize: "0.65rem" }}>Total Time</div>
-          <div className="kpi-box-sub" style={isOutcomesExpanded ? { fontSize: "0.75rem" } : { fontSize: "0.6rem" }}>{timeSub}</div>
-        </div>
-
-        {/* Cost */}
-        <div className="kpi-box">
-          <div className="kpi-box-top">
-            <div className="kpi-icon-wrapper">
-              <div style={{ width: 24, height: 24, borderRadius: "6px", background: "#dcfce7", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Banknote size={12} color="#16a34a" />
-              </div>
-              <div className="kpi-box-value" style={isOutcomesExpanded ? { fontSize: "1.2rem" } : { fontSize: "0.85rem" }}>${kpi.j_cost_usd.toFixed(2)}</div>
-            </div>
-            <div className="kpi-badge" style={{ color: "#16a34a", fontSize: "0.6rem", fontWeight: 700 }}>↓ 22%</div>
-          </div>
-          <div className="kpi-box-label" style={isOutcomesExpanded ? { fontSize: "0.9rem" } : { fontSize: "0.65rem" }}>Total Cost</div>
-          <div className="kpi-box-sub" style={isOutcomesExpanded ? { fontSize: "0.75rem" } : { fontSize: "0.6rem" }}>Energy + Charging</div>
-        </div>
-
-        {/* Health */}
-        <div className="kpi-box">
-          <div className="kpi-box-top">
-            <div className="kpi-icon-wrapper">
-              <div style={{ width: 28, height: 28, borderRadius: "6px", background: kpi.battery_health === "Nominal" ? "#dcfce7" : "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Battery size={12} color={kpi.battery_health === "Nominal" ? "#16a34a" : "#d97706"} />
-              </div>
-              <div className="kpi-box-value" style={isOutcomesExpanded ? { fontSize: "1.2rem" } : { fontSize: "0.8rem", wordBreak: "break-word", lineHeight: 1.1 }}>{kpi.battery_health}</div>
-            </div>
-            <div className="kpi-badge" style={{ color: "transparent", fontSize: "0.75rem", fontWeight: 700 }}>-</div>
-          </div>
-          <div className="kpi-box-label" style={isOutcomesExpanded ? { fontSize: "0.9rem" } : { fontSize: "0.65rem" }}>Battery Health</div>
-          <div className="kpi-box-sub" style={isOutcomesExpanded ? { fontSize: "0.75rem" } : { fontSize: "0.6rem" }}>Low degradation</div>
-        </div>
-
-        {/* Emissions */}
-        <div className="kpi-box">
-          <div className="kpi-box-top">
-            <div className="kpi-icon-wrapper">
-              <div style={{ width: 28, height: 28, borderRadius: "6px", background: "#dcfce7", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Leaf size={12} color="#16a34a" />
-              </div>
-              <div className="kpi-box-value" style={isOutcomesExpanded ? { fontSize: "1.2rem" } : { fontSize: "0.85rem" }}>
-                {kpi.j_env_gco2 >= 1000
-                  ? `${(kpi.j_env_gco2 / 1000).toFixed(1)} kg`
-                  : `${Math.round(kpi.j_env_gco2)} g`}
-              </div>
-            </div>
-            <div className="kpi-badge" style={{ color: "#16a34a", fontSize: "0.75rem", fontWeight: 700 }}>↓ 28%</div>
-          </div>
-          <div className="kpi-box-label" style={isOutcomesExpanded ? { fontSize: "0.9rem" } : { fontSize: "0.65rem" }}>Grid CO₂</div>
-          <div className="kpi-box-sub" style={isOutcomesExpanded ? { fontSize: "0.75rem" } : { fontSize: "0.6rem" }}>Local grid mix</div>
-        </div>
+      <div style={{ display: "grid", gridTemplateColumns: isOutcomesExpanded ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: "8px", flex: 1, width: "100%" }}>
+        {kpiCards.map((card, i) => <MetricCard key={i} {...card} isExpanded={isOutcomesExpanded} />)}
       </div>
       
       {isOutcomesExpanded && (
@@ -190,7 +185,7 @@ export default function KPIDash({ routeData }: KPIDashProps) {
         <div style={{ display: "flex", alignItems: "center", gap: 4 }}><div style={{ width: 8, height: 8, borderRadius: "50%", background: "#16a34a" }}></div> Charging Stop</div>
       </div>
 
-      <div style={{ width: "100%", height: isTelemetryExpanded ? "100%" : 100, minHeight: isTelemetryExpanded ? 300 : 100 }}>
+      <div style={{ width: "100%", height: isTelemetryExpanded ? "100%" : 75, minHeight: isTelemetryExpanded ? 300 : 75 }}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={telemetry_data.map((pt) => ({
@@ -247,6 +242,19 @@ export default function KPIDash({ routeData }: KPIDashProps) {
           </AreaChart>
         </ResponsiveContainer>
       </div>
+
+      {!isTelemetryExpanded && (
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: "8px", borderTop: "1px dashed #e2e8f0", paddingTop: "6px" }}>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <span style={{ fontSize: "0.6rem", color: "#64748b", fontWeight: 600 }}>CHARGING STOPS</span>
+            <span style={{ fontSize: "0.75rem", color: "#0f172a", fontWeight: 700 }}>{charging_stops.length} Fast Chargers</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", textAlign: "right" }}>
+            <span style={{ fontSize: "0.6rem", color: "#64748b", fontWeight: 600 }}>DESTINATION SOC</span>
+            <span style={{ fontSize: "0.75rem", color: "#16a34a", fontWeight: 700 }}>{Math.round(kpi.final_soc * 100)}% Remaining</span>
+          </div>
+        </div>
+      )}
 
       {isTelemetryExpanded && (
         <div style={{ marginTop: "24px", padding: "20px", background: "#f8fafc", borderRadius: "12px", border: "1px solid #e2e8f0" }}>

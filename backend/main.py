@@ -8,6 +8,7 @@ Uses OSRM public routing API for real road-following routes.
 
 import math
 import random
+import uuid
 from typing import Optional
 
 import httpx
@@ -252,9 +253,10 @@ CHARGING_STATIONS = _generate_stations()
 class RouteRequest(BaseModel):
     start_coords: list[float] = Field(..., min_length=2, max_length=2)
     end_coords: list[float] = Field(..., min_length=2, max_length=2)
-    payload_kg: float = Field(2000.0, ge=0, le=10000)
+    payload_kg: float = Field(2000.0, ge=0, le=30000)
     starting_soc: float = Field(0.45, gt=0, le=1.0)
     optimization_priority: str = Field("cost")  # time | cost | health | env
+    truck_model: str | None = Field(default="Tesla Semi")
 
 
 class ChargingStop(BaseModel):
@@ -312,7 +314,7 @@ def find_nearest_station(
     lng: float,
     stations: list[dict],
     exclude_ids: set[str] | None = None,
-    max_detour_m: float = 80_000,  # 80 km max detour
+    max_detour_m: float = 20_000,  # 20 km max detour
     priority: str = "time",
 ) -> dict | None:
     """Find the nearest charging station within max_detour_m, affected by priority."""
@@ -357,24 +359,48 @@ TELEMETRY_SAMPLE_INTERVAL_M = 2000  # Sample every 2 km
 
 
 async def plan_route(req: RouteRequest) -> RouteResponse:
-    battery_kwh = DEFAULT_BATTERY_CAPACITY_KWH
+    battery_kwh = 900.0  # Default to large class-8 battery
+    if req.truck_model:
+        tm = req.truck_model.lower()
+        if "tesla" in tm:
+            battery_kwh = 900.0
+        elif "volvo" in tm:
+            battery_kwh = 565.0
+        elif "freightliner" in tm:
+            battery_kwh = 438.0
+        elif "nikola" in tm:
+            battery_kwh = 733.0
+
     vehicle_mass = DEFAULT_VEHICLE_MASS_KG + req.payload_kg
 
     start = (req.start_coords[0], req.start_coords[1])
     end = (req.end_coords[0], req.end_coords[1])
 
-    # Add a slight artificial detour for non-time priorities to visually change the route
+    # Add a realistic detour for non-time priorities to visually change the route
     base_waypoints = [start]
     detour_pt = None
     if req.optimization_priority != "time":
         mid_lat = (start[0] + end[0]) / 2.0
         mid_lng = (start[1] + end[1]) / 2.0
-        if req.optimization_priority == "cost":
-            detour_pt = (mid_lat + 0.05, mid_lng + 0.02)
-        elif req.optimization_priority == "health":
-            detour_pt = (mid_lat - 0.02, mid_lng + 0.05)
-        elif req.optimization_priority == "env":
-            detour_pt = (mid_lat - 0.04, mid_lng - 0.04)
+        
+        # To ensure the detour is on real road networks, pick a charging station
+        # near the midpoint but offset noticeably based on the priority choice.
+        candidates = []
+        for s in CHARGING_STATIONS:
+            if not s["station_id"].startswith("CS_TMP"):
+                d = haversine_m(mid_lat, mid_lng, s["lat"], s["lng"])
+                # Must be a significant detour (20km - 400km) to be visible on map
+                if 20_000 < d < 400_000:
+                    candidates.append(s)
+        
+        if candidates:
+            if req.optimization_priority == "cost":
+                best_s = sorted(candidates, key=lambda s: s["lng"])[0] # Westward bias
+            elif req.optimization_priority == "health":
+                best_s = sorted(candidates, key=lambda s: s["lat"])[-1] # Northward bias
+            else: # env
+                best_s = sorted(candidates, key=lambda s: s["lng"])[-1] # Eastward bias
+            detour_pt = (best_s["lat"], best_s["lng"])
         
         if detour_pt:
             base_waypoints.append(detour_pt)
@@ -427,21 +453,15 @@ async def plan_route(req: RouteRequest) -> RouteResponse:
                 lat1, lng1, CHARGING_STATIONS, exclude_ids=used_station_ids, priority=req.optimization_priority
             )
             if station is None:
-                # Try with larger radius
-                station = find_nearest_station(
-                    lat1, lng1, CHARGING_STATIONS, exclude_ids=used_station_ids,
-                    max_detour_m=2000_000, priority=req.optimization_priority
-                )
-            if station is None:
                 # Generate a temporary station for the prototype so it never fails
-                fake_id = f"CS_TMP_{len(used_station_ids)}"
+                fake_id = f"CS_TMP_{uuid.uuid4().hex[:8]}"
                 station = {
                     "station_id": fake_id,
                     "name": f"Dynamic EV Hub ({round(lat1, 2)}, {round(lng1, 2)})",
                     "lat": lat1,
                     "lng": lng1,
                     "num_plugs": 2,
-                    "power_kw": 120
+                    "power_kw": 1000  # MCS (Megawatt Charging System) for heavy duty trucks
                 }
                 CHARGING_STATIONS.append(station)
 
@@ -456,17 +476,31 @@ async def plan_route(req: RouteRequest) -> RouteResponse:
             current_soc = CHARGE_TARGET_SOC  # Recharged
 
     # ── Phase 3: Get the final route through all waypoints ──
-    waypoints = [start]
-    if detour_pt and not stop_positions:
-        waypoints.append(detour_pt)
+    # Sort all intermediate points by their index along the polyline to maintain correct driving order!
+    intermediate_pts = []
+    if detour_pt:
+        # Find closest index for detour
+        min_d = float('inf')
+        d_idx = 0
+        for idx, pt in enumerate(polyline_pts):
+            d = haversine_m(pt[0], pt[1], detour_pt[0], detour_pt[1])
+            if d < min_d:
+                min_d = d
+                d_idx = idx
+        intermediate_pts.append({"lat": detour_pt[0], "lng": detour_pt[1], "index": d_idx})
     
     for sp in stop_positions:
-        waypoints.append((sp["lat"], sp["lng"]))
+        intermediate_pts.append({"lat": sp["lat"], "lng": sp["lng"], "index": sp["index"]})
         
+    intermediate_pts.sort(key=lambda x: x["index"])
+
+    waypoints = [start]
+    for pt in intermediate_pts:
+        waypoints.append((pt["lat"], pt["lng"]))
     waypoints.append(end)
 
-    if len(waypoints) > 2 or detour_pt:
-        # Re-route through charging stations or detour
+    if len(waypoints) > 2:
+        # Re-route through charging stations and detours in precise order
         final_route = await get_osrm_route(waypoints)
         if final_route is not None:
             route_data = final_route["routes"][0]

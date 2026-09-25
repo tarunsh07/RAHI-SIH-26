@@ -146,7 +146,7 @@ def calculate_wait_time(
     Returns expected wait time in minutes.
     """
     if arrival_rate_lambda is None:
-        arrival_rate_lambda = random.uniform(1.0, 10.0)
+        arrival_rate_lambda = random.uniform(0.1, 2.0)  # Heavy duty trucks arrive less frequently
 
     if avg_service_time_min <= 0.01:
         return 0.0

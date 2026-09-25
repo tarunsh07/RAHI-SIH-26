@@ -42,12 +42,24 @@ const activeStationIcon = L.divIcon({
   iconAnchor: [8, 8],
 });
 
+const highlightIcon = L.divIcon({
+  className: "",
+  html: `<div style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;background:linear-gradient(135deg, #eab308, #ca8a04);color:white;border-radius:50%;box-shadow:0 0 0 6px rgba(234,179,8,0.3);border:2px solid white;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></div>`,
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+});
+
 /* Auto-fit bounds component */
-function FitBounds({ coords }: { coords: [number, number][] }) {
+function FitBounds({ coords, highlight }: { coords: [number, number][], highlight?: [number, number] | null }) {
   const map = useMap();
   const prevKey = useRef("");
 
   useEffect(() => {
+    if (highlight) {
+      map.flyTo(highlight, 14, { duration: 1.5 });
+      return;
+    }
+    
     if (coords.length < 2) return;
     const key = coords.map((c) => `${c[0].toFixed(3)},${c[1].toFixed(3)}`).join("|");
     if (key === prevKey.current) return;
@@ -55,8 +67,22 @@ function FitBounds({ coords }: { coords: [number, number][] }) {
 
     const bounds = L.latLngBounds(coords.map(([lat, lng]) => [lat, lng]));
     map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
-  }, [coords, map]);
+  }, [coords, map, highlight]);
 
+  return null;
+}
+
+/* Fixes broken tiles when container resizes */
+function MapUpdater({ isExpanded }: { isExpanded?: boolean }) {
+  const map = useMap();
+  useEffect(() => {
+    const container = map.getContainer();
+    const observer = new ResizeObserver(() => {
+      map.invalidateSize();
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [map]);
   return null;
 }
 
@@ -66,6 +92,7 @@ interface MapViewProps {
   endCoords: [number, number];
   isExpanded?: boolean;
   onCloseExpand?: () => void;
+  highlightCoords?: [number, number] | null;
 }
 
 export default function MapView({
@@ -74,10 +101,11 @@ export default function MapView({
   endCoords,
   isExpanded,
   onCloseExpand,
+  highlightCoords,
 }: MapViewProps) {
   const center: [number, number] = [28.6139, 77.209];
   const [mapType, setMapType] = useState<"Map" | "Satellite">("Map");
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
 
   const allStations: ChargingStation[] = routeData?.stations ?? [];
   const activeStationIds = new Set(
@@ -115,12 +143,12 @@ export default function MapView({
   return (
     <div className={`map-panel ${isExpanded ? 'fullscreen-map' : ''} ${isDarkMode ? 'dark-mode-map' : ''}`}>
       {isExpanded && (
-        <button onClick={onCloseExpand} style={{ position: "absolute", top: 16, right: 16, zIndex: 10000, background: "rgba(255,255,255,0.9)", color: "#475569", padding: "8px", borderRadius: "50%", border: "1px solid #cbd5e1", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 6px rgba(0,0,0,0.1)" }}>
+        <button onClick={onCloseExpand} style={{ position: "absolute", top: 12, right: 12, zIndex: 10000, background: "#ffffff", color: "#475569", padding: "6px", borderRadius: "6px", border: "1px solid #cbd5e1", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}>
           <X size={20} />
         </button>
       )}
 
-      <div className="map-mode-toggle">
+      <div className="map-mode-toggle" style={isExpanded ? { right: 52 } : {}}>
         <div 
           className={`mode-btn ${mapType === "Map" ? "active" : ""}`}
           onClick={() => setMapType("Map")}
@@ -183,6 +211,7 @@ export default function MapView({
         zoomControl={false}
       >
         <ZoomControl position="topleft" />
+        <MapUpdater isExpanded={isExpanded} />
         
         {mapType === "Map" ? (
           <TileLayer
@@ -197,7 +226,7 @@ export default function MapView({
           />
         )}
 
-        <FitBounds coords={fitCoords} />
+        <FitBounds coords={fitCoords} highlight={highlightCoords} />
 
         <Marker position={startCoords} icon={startIcon}>
           <Tooltip direction="right" permanent offset={[12, -10]} className="map-tooltip">
@@ -246,6 +275,14 @@ export default function MapView({
               opacity: 1,
             }}
           />
+        )}
+
+        {highlightCoords && (
+          <Marker position={highlightCoords} icon={highlightIcon}>
+            <Tooltip direction="top" permanent offset={[0, -12]} className="map-tooltip">
+              <div style={{ fontWeight: 600, fontSize: "0.75rem", color: "#eab308" }}>Selected Location</div>
+            </Tooltip>
+          </Marker>
         )}
       </MapContainer>
     </div>
