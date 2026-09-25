@@ -131,7 +131,7 @@ export default function Sidebar({
   }, []);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (loading) {
       setProgress(0);
       interval = setInterval(() => {
