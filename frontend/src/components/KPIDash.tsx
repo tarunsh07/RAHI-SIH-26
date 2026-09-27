@@ -29,9 +29,9 @@ export default function KPIDash({ routeData }: KPIDashProps) {
 
   if (!routeData) {
     return (
-      <div className="right-panel-wrapper">
+      <>
         <div className="right-card outcomes-card skeleton-card">
-          <div className="section-title" style={{ marginBottom: 12 }}>Route Outcomes</div>
+          <div className="section-title" style={{ marginBottom: 12 }}>ROUTE OUTCOMES</div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, gap: 8, paddingBottom: 8 }}>
             <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <BarChart3 size={20} color="#cbd5e1" />
@@ -40,17 +40,7 @@ export default function KPIDash({ routeData }: KPIDashProps) {
             <p style={{ fontSize: "0.65rem", color: "#94a3b8", textAlign: "center", maxWidth: 180 }}>Time, cost, battery health &amp; emissions KPIs will populate after generating a route.</p>
           </div>
         </div>
-        <div className="right-card telemetry-card skeleton-card">
-          <div className="section-title" style={{ marginBottom: 12 }}>Battery Telemetry</div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, gap: 8, paddingBottom: 8 }}>
-            <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Battery size={20} color="#cbd5e1" />
-            </div>
-            <p style={{ fontSize: "0.8rem", fontWeight: 600, color: "#64748b" }}>SoC Chart Pending</p>
-            <p style={{ fontSize: "0.65rem", color: "#94a3b8", textAlign: "center", maxWidth: 160 }}>Real-time state-of-charge telemetry will display here once a route is active.</p>
-          </div>
-        </div>
-      </div>
+      </>
     );
   }
 
@@ -121,7 +111,7 @@ export default function KPIDash({ routeData }: KPIDashProps) {
   const outcomesContent = (
     <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-        <div className="section-title" style={{ marginBottom: 0 }}>Route Outcomes</div>
+        <div className="section-title" style={{ marginBottom: 0 }}>ROUTE OUTCOMES</div>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           {isOutcomesExpanded && (
             <select style={{ fontSize: "0.65rem", padding: "4px 8px", borderRadius: "4px", border: "1px solid #e2e8f0", outline: "none", color: "#475569" }}>
@@ -282,8 +272,7 @@ export default function KPIDash({ routeData }: KPIDashProps) {
   );
 
   return (
-    <div className="right-panel-wrapper">
-      
+    <>
       {/* Route Outcomes Card */}
       {isOutcomesExpanded ? (
         <div className="fullscreen-modal-overlay" onClick={() => setIsOutcomesExpanded(false)}>
@@ -301,24 +290,6 @@ export default function KPIDash({ routeData }: KPIDashProps) {
           {outcomesContent}
         </div>
       )}
-
-      {/* Battery Telemetry Card */}
-      {isTelemetryExpanded ? (
-        <div className="fullscreen-modal-overlay" onClick={() => setIsTelemetryExpanded(false)}>
-          <div className="fullscreen-modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="fullscreen-modal-close" onClick={() => setIsTelemetryExpanded(false)}>
-              <X size={16} />
-            </button>
-            <div style={{ maxWidth: 1000, margin: "0 auto", width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
-              {telemetryContent}
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="right-card telemetry-card">
-          {telemetryContent}
-        </div>
-      )}
-    </div>
+    </>
   );
 }

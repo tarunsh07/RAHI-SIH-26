@@ -11,7 +11,7 @@ export default function RouteItinerary({ routeData, startName, endName }: { rout
   if (!routeData) {
     return (
       <div className="bottom-panel itinerary-panel skeleton-card" style={{ display: "flex", flexDirection: "column", padding: "12px 14px" }}>
-        <div className="section-title" style={{ marginBottom: 8 }}>Route Itinerary</div>
+        <div className="section-title" style={{ marginBottom: 8 }}>ROUTE ITINERARY</div>
         <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
           <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <MapPin size={18} color="#cbd5e1" />
@@ -95,7 +95,7 @@ export default function RouteItinerary({ routeData, startName, endName }: { rout
   const content = (
     <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-        <div className="section-title" style={{ marginBottom: 0 }}>Route Itinerary</div>
+        <div className="section-title" style={{ marginBottom: 0 }}>ROUTE ITINERARY</div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <button onClick={handleExport} style={{ display: "flex", alignItems: "center", gap: 6, background: "white", border: "2px solid #cbd5e1", borderRadius: 4, padding: "4px 10px", fontSize: "0.75rem", color: "#475569", cursor: "pointer", fontWeight: 600, transition: "0.2s", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
             <Download size={12} /> Export

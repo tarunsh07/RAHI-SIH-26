@@ -5,7 +5,6 @@ import SideNav from "./components/SideNav";
 import Sidebar from "./components/Sidebar";
 import MapView from "./components/MapView";
 import KPIDash from "./components/KPIDash";
-import ElevationChart from "./components/ElevationChart";
 import RouteItinerary from "./components/RouteItinerary";
 import VehicleCargo from "./components/VehicleCargo";
 import FleetDashboard from "./components/FleetDashboard";
@@ -100,25 +99,22 @@ export default function App() {
               loading={loading}
             />
             <main className="center-right-grid">
-          <div className="left-column">
-            <MapView
-              routeData={routeData}
-              startCoords={form.start_coords}
-              endCoords={form.end_coords}
-              isExpanded={isMapExpanded}
-              onCloseExpand={() => setIsMapExpanded(false)}
-              highlightCoords={highlightCoords}
-            />
-            <div className="map-bottom-row">
-              <ElevationChart routeData={routeData} />
-              <RouteItinerary routeData={routeData} startName={startName} endName={endName} />
-            </div>
-          </div>
-          <div className="right-column">
-            <KPIDash routeData={routeData} />
-            <VehicleCargo form={form} routeData={routeData} />
-          </div>
-        </main>
+              <div className="left-column">
+                <MapView
+                  routeData={routeData}
+                  startCoords={form.start_coords}
+                  endCoords={form.end_coords}
+                  isExpanded={isMapExpanded}
+                  onCloseExpand={() => setIsMapExpanded(false)}
+                  highlightCoords={highlightCoords}
+                />
+                <div className="map-bottom-row">
+                  <KPIDash routeData={routeData} />
+                  <RouteItinerary routeData={routeData} startName={startName} endName={endName} />
+                  <VehicleCargo form={form} routeData={routeData} />
+                </div>
+              </div>
+            </main>
         </>
         )}
         
