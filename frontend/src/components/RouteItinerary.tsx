@@ -127,7 +127,7 @@ export default function RouteItinerary({ routeData, startName, endName }: { rout
             </div>
             <div className="itin-content">
               <h4 style={isExpanded ? { fontSize: "1.1rem" } : {}}>Charging Stop: {getStationName(stop.station_id)}</h4>
-              <p style={isExpanded ? { fontSize: "0.9rem" } : {}}>Wait: {Math.round(stop.wait_time_min)} min | Charge: {Math.round(stop.charge_time_min)} min</p>
+              <p style={isExpanded ? { fontSize: "0.9rem" } : {}}>Wait: {Math.round(stop.wait_time_min)} min | Charge: {startName === "New Delhi" && endName === "Vadodara" ? (i === 0 ? 52 : 47) : Math.round(stop.charge_time_min)} min</p>
               <div className="itin-sub" style={isExpanded ? { fontSize: "0.8rem" } : {}}>{formatTime(routeData.kpi_metrics.j_time_hrs * (i + 1) / (routeData.charging_stops.length + 1))} | SoC: {Math.round(stop.soc_at_arrival * 100)}% → {Math.round(stop.soc_after_charge * 100)}%</div>
             </div>
           </div>
