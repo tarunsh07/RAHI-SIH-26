@@ -83,3 +83,7 @@ export default function VehicleCargo({ form, routeData }: { form: RouteRequest, 
 
   return <div className="bottom-panel vehicle-panel" style={{ paddingBottom: '8px', justifyContent: 'space-between', height: '100%' }}>{content}</div>;
 }
+
+
+
+

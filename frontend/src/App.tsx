@@ -15,7 +15,7 @@ import { ALL_CITIES } from "./types";
 export default function App() {
   const [form, setForm] = useState<RouteRequest>({
     start_coords: [28.6139, 77.209], // New Delhi
-    end_coords: [25.3176, 82.9739], // Varanasi
+    end_coords: [22.3072, 73.1812], // Vadodara
     payload_kg: 2000,
     starting_soc: 0.40,
     optimization_priority: "time",
@@ -75,7 +75,7 @@ export default function App() {
   };
 
   const startName = ALL_CITIES.find(c => c.coords[0] === form.start_coords[0] && c.coords[1] === form.start_coords[1])?.name || "New Delhi";
-  const endName = ALL_CITIES.find(c => c.coords[0] === form.end_coords[0] && c.coords[1] === form.end_coords[1])?.name || "Varanasi";
+  const endName = ALL_CITIES.find(c => c.coords[0] === form.end_coords[0] && c.coords[1] === form.end_coords[1])?.name || "Vadodara";
 
   return (
     <div className="app-shell">
