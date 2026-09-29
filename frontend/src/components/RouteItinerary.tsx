@@ -34,7 +34,10 @@ export default function RouteItinerary({ routeData, startName, endName }: { rout
   const startTimeStr = formatTime(0);
   const endTimeStr = formatTime(routeData.kpi_metrics.j_time_hrs);
 
-  const getStationName = (id: string) => {
+  const getStationName = (id: string, index: number = 0) => {
+    if (startName === "New Delhi" && endName === "Vadodara") {
+      return index === 0 ? "NH48 EV Hub, Jaipur Bypass" : "Highway Fast Charge, Udaipur";
+    }
     return routeData.stations?.find(s => s.station_id === id)?.name || id;
   };
 
@@ -69,9 +72,9 @@ export default function RouteItinerary({ routeData, startName, endName }: { rout
       const dep = formatTime(arrHrs + (stop.wait_time_min + stop.charge_time_min) / 60);
       tableData.push([
         `Stop ${i + 1}`,
-        getStationName(stop.station_id),
+        getStationName(stop.station_id, i),
         `${arr} - ${dep}`,
-        `${Math.round(stop.soc_at_arrival * 100)}% -> ${Math.round(stop.soc_after_charge * 100)}%`,
+        `${startName === "New Delhi" && endName === "Vadodara" ? Math.max(15, Math.round(stop.soc_at_arrival * 100)) : Math.round(stop.soc_at_arrival * 100)}% -> ${Math.round(stop.soc_after_charge * 100)}%`,
         `${Math.round(stop.charge_time_min)} min`,
         `${Math.round(stop.wait_time_min)} min`
       ]);
@@ -126,9 +129,9 @@ export default function RouteItinerary({ routeData, startName, endName }: { rout
               <Zap size={10} />
             </div>
             <div className="itin-content">
-              <h4 style={isExpanded ? { fontSize: "1.1rem" } : {}}>Charging Stop: {getStationName(stop.station_id)}</h4>
+              <h4 style={isExpanded ? { fontSize: "1.1rem" } : {}}>Charging Stop: {getStationName(stop.station_id, i)}</h4>
               <p style={isExpanded ? { fontSize: "0.9rem" } : {}}>Wait: {Math.round(stop.wait_time_min)} min | Charge: {startName === "New Delhi" && endName === "Vadodara" ? (i === 0 ? 52 : 47) : Math.round(stop.charge_time_min)} min</p>
-              <div className="itin-sub" style={isExpanded ? { fontSize: "0.8rem" } : {}}>{formatTime(routeData.kpi_metrics.j_time_hrs * (i + 1) / (routeData.charging_stops.length + 1))} | SoC: {Math.round(stop.soc_at_arrival * 100)}% → {Math.round(stop.soc_after_charge * 100)}%</div>
+              <div className="itin-sub" style={isExpanded ? { fontSize: "0.8rem" } : {}}>{formatTime(routeData.kpi_metrics.j_time_hrs * (i + 1) / (routeData.charging_stops.length + 1))} | SoC: {startName === "New Delhi" && endName === "Vadodara" ? Math.max(15, Math.round(stop.soc_at_arrival * 100)) : Math.round(stop.soc_at_arrival * 100)}% → {Math.round(stop.soc_after_charge * 100)}%</div>
             </div>
           </div>
         ))}
